@@ -1,6 +1,7 @@
 package com.youngthree.querydslstudy;
 
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.youngthree.querydslstudy.entity.Member;
 import com.youngthree.querydslstudy.entity.QMember;
@@ -13,6 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static com.youngthree.querydslstudy.entity.QMember.*;
 
@@ -71,6 +74,7 @@ class QuerydslBasicTest {
 
     }
 
+    //AND 조건을파라미터로처리
     @Test
     public void querydslTest2(){
         Member findMember = queryFactory.select(member)
@@ -78,5 +82,66 @@ class QuerydslBasicTest {
                 .where(member.username.eq("member1").and(member.age.between(10, 20)))
                 .fetchOne();
         Assertions.assertThat(findMember.getUsername()).isEqualTo("member1");
+    }
+
+    //결과 조회
+    @Test
+    public void 결과조회_리스트(){
+        List<Member> members = queryFactory.selectFrom(member)
+                .fetch();
+        Assertions.assertThat(members.size()).isEqualTo(4);
+    }
+
+    @Test
+    public void 결과조회_처음하나(){
+        Member member = queryFactory.selectFrom(QMember.member)
+                .fetchFirst();
+        Assertions.assertThat(member.getUsername()).isEqualTo("member1");
+    }
+
+    @Test
+    public void 정렬(){
+        em.persist(new Member(null, 100));
+        em.persist(new Member("member5", 100));
+        em.persist(new Member("member6", 100));
+
+        List<Member> members = queryFactory.select(member)
+                .from(member)
+                .where(member.age.eq(100))
+                .orderBy(member.age.desc(), member.username.asc().nullsLast())
+                .fetch();
+
+        Member member1 = members.get(0);
+        Member member2 = members.get(1);
+        Member member3 = members.get(2);
+
+        Assertions.assertThat(member1.getUsername()).isEqualTo("member5");
+        Assertions.assertThat(member2.getUsername()).isEqualTo("member6");
+        Assertions.assertThat(member3.getUsername()).isNull();
+    }
+
+    @Test
+    public void paging(){
+        List<Member> members = queryFactory.select(member)
+                .from(member)
+                .orderBy(member.username.desc())
+                .offset(0)
+                .limit(2)
+                .fetch();
+        Assertions.assertThat(members.size()).isEqualTo(2);
+    }
+
+    @Test
+    public void paging2() {
+        QueryResults<Member> queryResults = queryFactory
+                .selectFrom(member)
+                .orderBy(member.username.desc())
+                .offset(1)
+                .limit(2)
+                .fetchResults();
+        Assertions.assertThat(queryResults.getTotal()).isEqualTo(4);
+        Assertions.assertThat(queryResults.getLimit()).isEqualTo(2);
+        Assertions.assertThat(queryResults.getOffset()).isEqualTo(1);
+        Assertions.assertThat(queryResults.getResults().size()).isEqualTo(2);
     }
 }
