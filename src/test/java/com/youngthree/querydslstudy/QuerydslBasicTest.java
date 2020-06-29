@@ -2,6 +2,7 @@ package com.youngthree.querydslstudy;
 
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.youngthree.querydslstudy.entity.Member;
 import com.youngthree.querydslstudy.entity.QMember;
@@ -144,4 +145,18 @@ class QuerydslBasicTest {
         Assertions.assertThat(queryResults.getOffset()).isEqualTo(1);
         Assertions.assertThat(queryResults.getResults().size()).isEqualTo(2);
     }
+
+    @Test
+    public void aggregation(){
+        List<Tuple> tuples = queryFactory.select(member.count(), member.age.sum(), member.age.avg(), member.age.min(), member.age.max())
+                .from(member)
+                .fetch();
+        Tuple tuple = tuples.get(0);
+        Assertions.assertThat(tuple.get(member.count())).isEqualTo(4);
+        Assertions.assertThat(tuple.get(member.age.sum())).isEqualTo(100);
+        Assertions.assertThat(tuple.get(member.age.avg())).isEqualTo(25);
+        Assertions.assertThat(tuple.get(member.age.min())).isEqualTo(10);
+        Assertions.assertThat(tuple.get(member.age.max())).isEqualTo(40);
+    }
 }
+
