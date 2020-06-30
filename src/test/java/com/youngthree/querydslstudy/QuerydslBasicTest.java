@@ -6,6 +6,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.youngthree.querydslstudy.entity.Member;
 import com.youngthree.querydslstudy.entity.QMember;
+import com.youngthree.querydslstudy.entity.QTeam;
 import com.youngthree.querydslstudy.entity.Team;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import javax.persistence.EntityManager;
 import java.util.List;
 
 import static com.youngthree.querydslstudy.entity.QMember.*;
+import static com.youngthree.querydslstudy.entity.QTeam.*;
 
 @SpringBootTest
 @Transactional
@@ -157,6 +159,17 @@ class QuerydslBasicTest {
         Assertions.assertThat(tuple.get(member.age.avg())).isEqualTo(25);
         Assertions.assertThat(tuple.get(member.age.min())).isEqualTo(10);
         Assertions.assertThat(tuple.get(member.age.max())).isEqualTo(40);
+    }
+
+    @Test
+    public void join(){
+        List<Member> members = queryFactory.select(member)
+                .from(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        Assertions.assertThat(members).extracting("username").containsExactly("member1","member2");
     }
 }
 
