@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 
 import java.util.List;
 
@@ -28,6 +29,9 @@ class QuerydslBasicTest {
 
     @Autowired
     private EntityManager em;
+
+    @Autowired
+    private EntityManagerFactory emf;
 
     private JPAQueryFactory queryFactory;
 
@@ -170,6 +174,30 @@ class QuerydslBasicTest {
                 .fetch();
 
         Assertions.assertThat(members).extracting("username").containsExactly("member1","member2");
+    }
+
+    @Test
+    public void join_no_fetch(){
+        em.flush();
+        em.clear();
+        Member member = queryFactory.select(QMember.member)
+                .from(QMember.member)
+                .join(QMember.member.team, team)
+                .where(QMember.member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(emf.getPersistenceUnitUtil().isLoaded(member.getTeam())).isFalse();
+    }
+
+    @Test
+    public void fetch_join(){
+        em.flush();
+        em.clear();
+        Member member = queryFactory.select(QMember.member)
+                .from(QMember.member)
+                .join(QMember.member.team, team).fetchJoin()
+                .where(QMember.member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(emf.getPersistenceUnitUtil().isLoaded(member.getTeam())).isTrue();
     }
 }
 
