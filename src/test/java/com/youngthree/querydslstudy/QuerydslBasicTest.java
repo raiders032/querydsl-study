@@ -3,6 +3,7 @@ package com.youngthree.querydslstudy;
 
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.youngthree.querydslstudy.entity.Member;
 import com.youngthree.querydslstudy.entity.QMember;
@@ -198,6 +199,20 @@ class QuerydslBasicTest {
                 .where(QMember.member.username.eq("member1"))
                 .fetchOne();
         Assertions.assertThat(emf.getPersistenceUnitUtil().isLoaded(member.getTeam())).isTrue();
+    }
+
+    @Test
+    public void subQuery() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.eq(
+                        JPAExpressions
+                                .select(memberSub.age.max()) .from(memberSub)
+                ))
+                .fetch();
+        Assertions.assertThat(result).extracting("age")
+                .containsExactly(40);
     }
 }
 
