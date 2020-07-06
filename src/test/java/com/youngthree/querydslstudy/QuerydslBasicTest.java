@@ -202,6 +202,17 @@ class QuerydslBasicTest {
     }
 
     @Test
+    public void subQuery() throws Exception{
+        QMember subMember = new QMember("subMember");
+        Member member = queryFactory.selectFrom(QMember.member)
+                .where(QMember.member.age.eq(
+                        JPAExpressions.select(subMember.age.max())
+                        .from(subMember)
+                )).fetchOne();
+        Assertions.assertThat(member.getAge()).isEqualTo(40);
+    }
+
+    @Test
     public void subQueryGoe() throws Exception {
         QMember memberSub = new QMember("memberSub");
         List<Member> result = queryFactory
