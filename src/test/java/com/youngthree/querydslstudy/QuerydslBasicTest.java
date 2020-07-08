@@ -237,5 +237,14 @@ class QuerydslBasicTest {
                                 .where(memberSub.age.gt(10)))).fetch();
         Assertions.assertThat(result).extracting("age").containsExactly(20, 30, 40);
     }
+
+    @Test
+    public void concat(){
+        String member1 = queryFactory.select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1).isEqualTo("member1_10");
+    }
 }
 
