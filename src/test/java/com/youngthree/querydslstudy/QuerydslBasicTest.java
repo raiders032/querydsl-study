@@ -246,5 +246,24 @@ class QuerydslBasicTest {
                 .fetchOne();
         Assertions.assertThat(member1).isEqualTo("member1_10");
     }
+
+    @Test
+    public void simpleProjection(){
+        String member1 = queryFactory.select(member.username)
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1).isEqualTo("member1");
+    }
+
+    @Test
+    public void tupleProjection(){
+        Tuple member1 = queryFactory.select(member.username, member.age)
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1.get(member.username)).isEqualTo("member1");
+        Assertions.assertThat(member1.get(member.age)).isEqualTo(10);
+    }
 }
 
