@@ -202,17 +202,68 @@ class QuerydslBasicTest {
     }
 
     @Test
-    public void subQuery() throws Exception {
+    public void subQuery() throws Exception{
+        QMember subMember = new QMember("subMember");
+        Member member = queryFactory.selectFrom(QMember.member)
+                .where(QMember.member.age.eq(
+                        JPAExpressions.select(subMember.age.max())
+                        .from(subMember)
+                )).fetchOne();
+        Assertions.assertThat(member.getAge()).isEqualTo(40);
+    }
+
+    @Test
+    public void subQueryGoe() throws Exception {
         QMember memberSub = new QMember("memberSub");
         List<Member> result = queryFactory
                 .selectFrom(member)
-                .where(member.age.eq(
+                .where(member.age.goe(
                         JPAExpressions
-                                .select(memberSub.age.max()) .from(memberSub)
+                                .select(memberSub.age.avg()).from(memberSub)
                 ))
                 .fetch();
         Assertions.assertThat(result).extracting("age")
-                .containsExactly(40);
+                .containsExactly(30, 40);
+    }
+
+    @Test
+    public void subQueryIn() throws Exception {
+        QMember memberSub = new QMember("memberSub");
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .where(member.age.in(
+                            JPAExpressions
+                                .select(memberSub.age).from(memberSub)
+                                .where(memberSub.age.gt(10)))).fetch();
+        Assertions.assertThat(result).extracting("age").containsExactly(20, 30, 40);
+    }
+
+    @Test
+    public void concat(){
+        String member1 = queryFactory.select(member.username.concat("_").concat(member.age.stringValue()))
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1).isEqualTo("member1_10");
+    }
+
+    @Test
+    public void simpleProjection(){
+        String member1 = queryFactory.select(member.username)
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1).isEqualTo("member1");
+    }
+
+    @Test
+    public void tupleProjection(){
+        Tuple member1 = queryFactory.select(member.username, member.age)
+                .from(member)
+                .where(member.username.eq("member1"))
+                .fetchOne();
+        Assertions.assertThat(member1.get(member.username)).isEqualTo("member1");
+        Assertions.assertThat(member1.get(member.age)).isEqualTo(10);
     }
 }
 
